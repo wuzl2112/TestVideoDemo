@@ -1,0 +1,48 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical"
+    tools:context=".MainActivity">
+
+    <Button
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="Channels/101"
+        android:onClick="onRtspListener"
+        />
+    <Button
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="Channels/102"
+        android:onClick="onRtmpListener"
+        />
+    <Button
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="http Demo"
+        android:onClick="onHttpListener"
+        />
+    <Button
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="扫描视频二维码"
+        android:onClick="onQcodeListener"
+        />
+    <EditText
+        android:id="@+id/etVideoPath"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:hint="请输入视频链接"
+        />
+    <Button
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="打开Video"
+        android:onClick="onPlayListener"
+        />
+
+
+</LinearLayout>

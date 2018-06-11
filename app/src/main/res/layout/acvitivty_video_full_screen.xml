@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="utf-8"?>
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent">
+    <com.example.wuzelong.testvideodemo.view.VlcPlayerView
+        android:id="@+id/vlcPlayerView"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content" />
+
+
+
+    <ImageView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_margin="15dp"
+        android:src="@drawable/ic_player_back"
+        android:onClick="onBackListener"
+        />
+    <ImageView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_margin="15dp"
+        android:layout_gravity="bottom|right"
+        android:src="@drawable/ic_player_shrink"
+        android:onClick="onShrinkListener"
+        />
+
+</FrameLayout>

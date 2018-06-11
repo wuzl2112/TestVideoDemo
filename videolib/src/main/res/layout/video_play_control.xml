@@ -1,0 +1,79 @@
+<?xml version="1.0" encoding="utf-8"?>
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent">
+    <com.xmwsh.videolib.media.IjkVideoView
+        android:id="@+id/ijkVideoView"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_gravity="center"
+        />
+    <TableLayout
+        android:id="@+id/hud_view"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_gravity="right|center_vertical"
+        android:background="@color/ijk_transparent_dark"
+        android:visibility="gone"
+        android:padding="8dp" />
+    <include layout="@layout/video_setting_view"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginBottom="40dp"
+        android:id="@+id/videSetView"
+        android:layout_gravity="bottom"
+        android:visibility="gone"
+        />
+    <RelativeLayout
+        android:id="@+id/bottomView"
+        android:layout_width="match_parent"
+        android:layout_height="40dp"
+        android:layout_gravity="bottom"
+        android:background="@color/ijk_transparent_dark"
+        android:visibility="gone"
+        >
+        <ImageView
+            android:id="@+id/ivShrink"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginRight="15dp"
+            android:layout_alignParentRight="true"
+            android:layout_centerVertical="true"
+            android:src="@drawable/ic_player_enlarge"
+            />
+        <TextView
+            android:id="@+id/tvScreenshot"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_centerVertical="true"
+            android:layout_toLeftOf="@id/ivShrink"
+            android:textColor="@android:color/white"
+            android:visibility="gone"
+            android:text="截屏"/>
+        <TextView
+            android:id="@+id/tvRotation"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_centerVertical="true"
+            android:layout_marginRight="15dp"
+            android:layout_toLeftOf="@id/tvScreenshot"
+            android:textColor="@android:color/white"
+            android:visibility="visible"
+            android:text="旋转"
+            />
+        <TextView
+            android:id="@+id/tvSetting"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginRight="15dp"
+            android:layout_toLeftOf="@id/tvRotation"
+            android:layout_centerVertical="true"
+            android:textColor="@android:color/white"
+            android:visibility="gone"
+            android:text="自适应"
+            />
+
+    </RelativeLayout>
+
+
+</FrameLayout>
