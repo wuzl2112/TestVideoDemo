@@ -2,6 +2,7 @@ package com.xmwsh.videolib.media;
 
 import android.content.Context;
 import android.graphics.Color;
+import android.graphics.drawable.Drawable;
 import android.os.Handler;
 import android.os.Message;
 import android.support.annotation.NonNull;
@@ -34,7 +35,8 @@ public class PlayerView extends FrameLayout
     private ShowBottomViewHandler mShowBottomViewHandler;
     private int degreee = 0;
     private IScreenSwitchingListener mIScreenSwitchingListener;
-    private boolean isShowBottomNavView = true;
+    private boolean isClickCanShowBottomView = true;
+    private boolean isClickCanShowPlayInfoView = true;
     private TextView tvRotation;
 
 
@@ -48,7 +50,6 @@ public class PlayerView extends FrameLayout
 
     public PlayerView(@NonNull Context context, @Nullable AttributeSet attrs, int defStyleAttr) {
         super(context, attrs, defStyleAttr);
-        Log.e("test","PlayerView ... ");
         init();
     }
 
@@ -104,14 +105,16 @@ public class PlayerView extends FrameLayout
     public boolean onTouchEvent(MotionEvent event) {
         int action = event.getAction();
         if (action == MotionEvent.ACTION_DOWN) {
-            long time = System.currentTimeMillis();
-            if (time - oldTime < 1000) {
-                mHudView.setVisibility(View.VISIBLE);
-            }else {
-                oldTime = System.currentTimeMillis();
+            if (isClickCanShowPlayInfoView) {
+                long time = System.currentTimeMillis();
+                if (time - oldTime < 1000) {
+                    mHudView.setVisibility(View.VISIBLE);
+                }else {
+                    oldTime = System.currentTimeMillis();
+                }
             }
 
-            if (isShowBottomNavView) {
+            if (isClickCanShowBottomView) {
                 bottomView.setVisibility(View.VISIBLE);
                 if (mShowBottomViewHandler != null) {
                     mShowBottomViewHandler.postDelayed(new Runnable() {
@@ -132,44 +135,37 @@ public class PlayerView extends FrameLayout
         int i = v.getId();
         if (i == R.id.tvSetting) {
             videSetView.setVisibility(VISIBLE);
-
         }
-        else if (i == R.id.hud_view) {
+        else if (i == R.id.hud_view) {//隐藏视频信息
             mHudView.setVisibility(View.GONE);
         }
-        else if (i == R.id.tvfit) {
+        else if (i == R.id.tvfit) {//自适应
             mVideoView.toggleAspectRatio(IRenderView.AR_ASPECT_FIT_PARENT);
             tvSetting.setText("自适应");
 
-        } else if (i == R.id.tv16scan9) {
+        } else if (i == R.id.tv16scan9) {//16：9
             mVideoView.toggleAspectRatio(IRenderView.AR_16_9_FIT_PARENT);
             tvSetting.setText("16:9");
 
-        } else if (i == R.id.tv4scan3) {
+        } else if (i == R.id.tv4scan3) {//4：3
             mVideoView.toggleAspectRatio(IRenderView.AR_4_3_FIT_PARENT);
             tvSetting.setText("4:3");
 
-        } else if (i == R.id.ivShrink) {
+        } else if (i == R.id.ivShrink) {//横竖屏切换
             if (mIScreenSwitchingListener != null) {
                 int tagSc = (int) ivShrink.getTag();
                 if (tagSc == 1) {
-                    tvRotation.setVisibility(GONE);
-//                    tvSetting.setVisibility(GONE);
                     mIScreenSwitchingListener.onScreenSwitch(2);
                     ivShrink.setTag(2);
                 } else {
-                    tvRotation.setVisibility(VISIBLE);
-//                    tvSetting.setVisibility(VISIBLE);
                     mIScreenSwitchingListener.onScreenSwitch(1);
                     ivShrink.setTag(1);
                 }
             }
 
-        } else if (i == R.id.tvRotation) {
+        } else if (i == R.id.tvRotation) {//旋转
             degreee += 90;
             mVideoView.setPlayVideoRotation(degreee);
-        }else if (i == R.id.tvScreenshot) {
-
         }
     }
 
@@ -185,6 +181,9 @@ public class PlayerView extends FrameLayout
         }
     }
 
+    /**
+     * 停止
+     */
     public void stop() {
         if (!mVideoView.isBackgroundPlayEnabled()) {
             mVideoView.stopPlayback();
@@ -196,6 +195,9 @@ public class PlayerView extends FrameLayout
         IjkMediaPlayer.native_profileEnd();
     }
 
+    /**
+     * 暂停
+     */
     public void pause() {
         if (!mVideoView.isBackgroundPlayEnabled()) {
             mVideoView.pause();
@@ -207,30 +209,104 @@ public class PlayerView extends FrameLayout
         mVideoView.resume();
     }
 
+    /**
+     * 设置播放链接
+     * @param url
+     */
     public void setUrl(String url) {
         this.mUrl = url;
         mVideoView.setVideoPath(mUrl);
     }
 
+    /**
+     * 开始播放
+     */
     public void starPlay() {
         mVideoView.start();
     }
 
+    /**
+     * 截屏
+     * @return
+     */
     public String shotScreen() {
         return mVideoView.getScreenShot();
     }
 
+    /**
+     * 设置全屏播放监听
+     * @param listener
+     */
     public void setScreenSwitchingListener(IScreenSwitchingListener listener) {
         this.mIScreenSwitchingListener = listener;
     }
 
-    public void hideBottomNav(boolean isShow) {
-        this.isShowBottomNavView = isShow;
+    /**
+     * 是否可以点击显示底部
+     * @param enable
+     */
+    public void setClickCanShowBottomView(boolean enable) {
+        this.isClickCanShowBottomView = enable;
     }
 
+    /**
+     * 是否可点击显示视频信息
+     * @param enable
+     */
+    public void setClickCanShowPlayInfoView(boolean enable) {
+        this.isClickCanShowPlayInfoView = enable;
+    }
+
+    /**
+     * 设置video大小
+     * @param width
+     * @param height
+     */
     public void setSize(int width,int height) {
         LayoutParams params = new LayoutParams(width,height);
         setLayoutParams(params);
+    }
+
+    /**
+     * 底部背景
+     * @param res
+     */
+    public void setBottomViewBg(int res) {
+        if (bottomView != null) {
+            bottomView.setVisibility(VISIBLE);
+            bottomView.setBackgroundColor(res);
+        }
+    }
+
+    /**
+     * 设置底部背景
+     * @param drawable
+     */
+    public void setBottomViewBg(Drawable drawable) {
+        if (bottomView != null && drawable != null) {
+            bottomView.setVisibility(VISIBLE);
+            bottomView.setBackground(drawable);
+        }
+    }
+
+    /**
+     * 是否显示底部
+     * @param isShow
+     */
+    public void setShowBottomView(boolean isShow) {
+        if (bottomView != null ) {
+            bottomView.setVisibility(isShow ? VISIBLE : GONE);
+        }
+    }
+
+    /**
+     * 修改全屏和退出全屏图标
+     * @param drawable
+     */
+    public void setShrinkIcon(Drawable drawable) {
+        if (ivShrink != null && drawable != null) {
+            ivShrink.setImageDrawable(drawable);
+        }
     }
 
 }

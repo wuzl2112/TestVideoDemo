@@ -38,12 +38,13 @@ public class TestVideo extends AppCompatActivity implements IScreenSwitchingList
 
     private void init() {
         mPlayerView = new PlayerView(this);
-        mPlayerView.setUrl("rtsp://184.72.239.149/vod/mp4://BigBuckBunny_175k.mov");
+        mPlayerView.setUrl("rtsp://admin:wnvxiaoti5566123@10.17.5.99:554/Streaming/Channels/101");
         FrameLayout.LayoutParams params = new
                 FrameLayout.LayoutParams(FrameLayout.LayoutParams.MATCH_PARENT,500);
         params.topMargin = 200;
         mPlayerView.setLayoutParams(params);
         mPlayerView.setScreenSwitchingListener(this);
+
         ViewGroup group = getWindow().getDecorView().findViewById(android.R.id.content);
         group.addView(mPlayerView);
     }
@@ -72,17 +73,15 @@ public class TestVideo extends AppCompatActivity implements IScreenSwitchingList
         if (direction == 1) {
             if(this.getResources().getConfiguration().orientation == Configuration.ORIENTATION_LANDSCAPE){
                 setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_PORTRAIT);//竖屏
-                int width = dm.widthPixels;
-                int height = dm.heightPixels;
-                Log.e("test","竖屏屏 width : "+width+" height : "+height);
-                mPlayerView.setSize(FrameLayout.LayoutParams.MATCH_PARENT,FrameLayout.LayoutParams.WRAP_CONTENT);
+
+                FrameLayout.LayoutParams params = new
+                        FrameLayout.LayoutParams(FrameLayout.LayoutParams.MATCH_PARENT,500);
+                params.topMargin = 200;
+                mPlayerView.setLayoutParams(params);
             }
         }else {
             if(this.getResources().getConfiguration().orientation == Configuration.ORIENTATION_PORTRAIT){
                 setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_LANDSCAPE);//横屏
-                int width = dm.widthPixels;
-                int height = dm.heightPixels;
-                Log.e("test","横屏 width : "+width+" height : "+height);
                 mPlayerView.setSize(FrameLayout.LayoutParams.MATCH_PARENT,FrameLayout.LayoutParams.MATCH_PARENT);
             }
         }

@@ -4,7 +4,9 @@ import android.content.pm.ActivityInfo;
 import android.content.res.Configuration;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
+import android.graphics.Color;
 import android.os.Bundle;
+import android.support.v4.content.ContextCompat;
 import android.support.v7.app.AppCompatActivity;
 import android.text.TextUtils;
 import android.util.DisplayMetrics;
@@ -33,6 +35,9 @@ public class VideoActivity extends AppCompatActivity implements IScreenSwitching
         setContentView(R.layout.activity_video);
         ivShot = findViewById(R.id.ivShot);
         mPlayerView = findViewById(R.id.playerView);
+        mPlayerView.setClickCanShowBottomView(false);
+        mPlayerView.setBottomViewBg(Color.TRANSPARENT);
+
         mPlayerView.setScreenSwitchingListener(this);
         String videoPath = getIntent().getStringExtra(VIDEO_URL_KEY);
         mPlayerView.setUrl(videoPath);
@@ -79,11 +84,12 @@ public class VideoActivity extends AppCompatActivity implements IScreenSwitching
         if (direction == 1) {
             if(this.getResources().getConfiguration().orientation == Configuration.ORIENTATION_LANDSCAPE){
                 setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_PORTRAIT);//竖屏
+                mPlayerView.setShrinkIcon(ContextCompat.getDrawable(this,R.drawable.ic_icon_all_screen));
             }
         }else {
             if(this.getResources().getConfiguration().orientation == Configuration.ORIENTATION_PORTRAIT){
                 setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_LANDSCAPE);//横屏
-
+                mPlayerView.setShrinkIcon(ContextCompat.getDrawable(this,R.drawable.ic_icon_quit_all_screen));
             }
         }
     }

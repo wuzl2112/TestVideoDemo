@@ -19,18 +19,27 @@ package com.xmwsh.videolib.media;
 
 import android.annotation.TargetApi;
 import android.content.Context;
+import android.content.res.TypedArray;
+import android.graphics.Matrix;
+import android.graphics.PointF;
 import android.graphics.SurfaceTexture;
 import android.os.Build;
+import android.os.Bundle;
+import android.os.Parcelable;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
 import android.util.AttributeSet;
 import android.util.Log;
+import android.view.MotionEvent;
+import android.view.ScaleGestureDetector;
 import android.view.Surface;
 import android.view.SurfaceHolder;
 import android.view.TextureView;
 import android.view.View;
 import android.view.accessibility.AccessibilityEvent;
 import android.view.accessibility.AccessibilityNodeInfo;
+
+import com.xmwsh.videolib.R;
 
 import java.lang.ref.WeakReference;
 import java.util.Map;
@@ -43,33 +52,67 @@ import tv.danmaku.ijk.media.player.ISurfaceTextureHost;
 @TargetApi(Build.VERSION_CODES.ICE_CREAM_SANDWICH)
 public class TextureRenderView extends TextureView implements IRenderView {
     private static final String TAG = "TextureRenderView";
+
+    private static final String SUPERSTATE_KEY = "superState";
+    private static final String MIN_SCALE_KEY = "minScale";
+    private static final String MAX_SCALE_KEY = "maxScale";
+    //最小缩放倍数
+    private float minScale = 1f;
+    //最大缩放倍数
+    private float maxScale = 5f;
+    //保存缩放倍数
+    private float saveScale = 1f;
+    //正常状态
+    private static final int NONE = 0;
+    //拖动
+    private static final int DRAG = 1;
+    //放大
+    private static final int ZOOM = 2;
+    private int mode = NONE;
+
+    private Matrix matrix = new Matrix();
+    private ScaleGestureDetector mScaleDetector;
+    private float[] m;
+    private PointF last = new PointF();
+    private PointF start = new PointF();
+    private float right, bottom;
+
     private MeasureHelper mMeasureHelper;
 
     public TextureRenderView(Context context) {
-        super(context);
-        initView(context);
+        this(context,null);
     }
 
     public TextureRenderView(Context context, AttributeSet attrs) {
-        super(context, attrs);
-        initView(context);
+        this(context, attrs,0);
     }
 
     public TextureRenderView(Context context, AttributeSet attrs, int defStyleAttr) {
-        super(context, attrs, defStyleAttr);
-        initView(context);
+        this(context, attrs, defStyleAttr,defStyleAttr);
     }
 
     @TargetApi(Build.VERSION_CODES.LOLLIPOP)
     public TextureRenderView(Context context, AttributeSet attrs, int defStyleAttr, int defStyleRes) {
         super(context, attrs, defStyleAttr, defStyleRes);
-        initView(context);
+        initView(context,attrs);
     }
 
-    private void initView(Context context) {
+    private void initView(Context context,AttributeSet attrs) {
         mMeasureHelper = new MeasureHelper(this);
         mSurfaceCallback = new SurfaceCallback(this);
         setSurfaceTextureListener(mSurfaceCallback);
+
+        TypedArray a = context.getTheme().obtainStyledAttributes(
+                attrs,
+                R.styleable.ZoomableTextureView,
+                0, 0);
+        try {
+            minScale = a.getFloat(R.styleable.ZoomableTextureView_minScale, minScale);
+            maxScale = a.getFloat(R.styleable.ZoomableTextureView_maxScale, maxScale);
+        } finally {
+            a.recycle();
+        }
+        setOnTouchListener(new ZoomOnTouchListeners());
     }
 
     @Override
@@ -110,7 +153,6 @@ public class TextureRenderView extends TextureView implements IRenderView {
 
     @Override
     public void setVideoRotation(int degree) {
-        Log.e("test","旋转 setVideoRotation degree ： "+degree);
         mMeasureHelper.setVideoRotation(degree);
         setRotation(degree);
     }
@@ -125,6 +167,27 @@ public class TextureRenderView extends TextureView implements IRenderView {
     protected void onMeasure(int widthMeasureSpec, int heightMeasureSpec) {
         mMeasureHelper.doMeasure(widthMeasureSpec, heightMeasureSpec);
         setMeasuredDimension(mMeasureHelper.getMeasuredWidth(), mMeasureHelper.getMeasuredHeight());
+    }
+
+    @Override
+    protected Parcelable onSaveInstanceState() {
+        Bundle bundle = new Bundle();
+        bundle.putParcelable(SUPERSTATE_KEY, super.onSaveInstanceState());
+        bundle.putFloat(MIN_SCALE_KEY, minScale);
+        bundle.putFloat(MAX_SCALE_KEY, maxScale);
+        return bundle;
+
+    }
+
+    @Override
+    public void onRestoreInstanceState(Parcelable state) {
+        if (state instanceof Bundle) {
+            Bundle bundle = (Bundle) state;
+            this.minScale = bundle.getInt(MIN_SCALE_KEY);
+            this.minScale = bundle.getInt(MAX_SCALE_KEY);
+            state = bundle.getParcelable(SUPERSTATE_KEY);
+        }
+        super.onRestoreInstanceState(state);
     }
 
     //--------------------
@@ -292,8 +355,6 @@ public class TextureRenderView extends TextureView implements IRenderView {
             for (IRenderCallback renderCallback : mRenderCallbackMap.keySet()) {
                 renderCallback.onSurfaceDestroyed(surfaceHolder);
             }
-
-            Log.d(TAG, "onSurfaceTextureDestroyed: destroy: " + mOwnSurfaceTexture);
             return mOwnSurfaceTexture;
         }
 
@@ -368,4 +429,126 @@ public class TextureRenderView extends TextureView implements IRenderView {
         super.onInitializeAccessibilityNodeInfo(info);
         info.setClassName(TextureRenderView.class.getName());
     }
+
+
+    private class ZoomOnTouchListeners implements View.OnTouchListener {
+        public ZoomOnTouchListeners() {
+            super();
+            m = new float[9];
+            mScaleDetector = new ScaleGestureDetector(getContext(), new ScaleListener());
+        }
+
+        @Override
+        public boolean onTouch(View view, MotionEvent motionEvent) {
+
+            mScaleDetector.onTouchEvent(motionEvent);
+
+            matrix.getValues(m);
+            float x = m[Matrix.MTRANS_X];
+            float y = m[Matrix.MTRANS_Y];
+            PointF curr = new PointF(motionEvent.getX(), motionEvent.getY());
+
+            switch (motionEvent.getActionMasked()) {
+                case MotionEvent.ACTION_DOWN:
+                    last.set(motionEvent.getX(), motionEvent.getY());
+                    start.set(last);
+                    mode = DRAG;
+                    break;
+                case MotionEvent.ACTION_UP:
+                    mode = NONE;
+                    break;
+                case MotionEvent.ACTION_POINTER_DOWN:
+                    last.set(motionEvent.getX(), motionEvent.getY());
+                    start.set(last);
+                    mode = ZOOM;
+                    break;
+                case MotionEvent.ACTION_MOVE:
+                    if (mode == ZOOM || (mode == DRAG && saveScale > minScale)) {
+                        float deltaX = curr.x - last.x;// x difference
+                        float deltaY = curr.y - last.y;// y difference
+                        if (y + deltaY > 0)
+                            deltaY = -y;
+                        else if (y + deltaY < -bottom)
+                            deltaY = -(y + bottom);
+
+                        if (x + deltaX > 0)
+                            deltaX = -x;
+                        else if (x + deltaX < -right)
+                            deltaX = -(x + right);
+                        matrix.postTranslate(deltaX, deltaY);
+                        last.set(curr.x, curr.y);
+                    }
+                    break;
+                case MotionEvent.ACTION_POINTER_UP:
+                    mode = NONE;
+                    break;
+            }
+            setTransform(matrix);
+            invalidate();
+            return true;
+        }
+
+        private class ScaleListener extends ScaleGestureDetector.SimpleOnScaleGestureListener {
+
+            @Override
+            public boolean onScaleBegin(ScaleGestureDetector detector) {
+                mode = ZOOM;
+                return true;
+            }
+
+            @Override
+            public boolean onScale(ScaleGestureDetector detector) {
+                float mScaleFactor = detector.getScaleFactor();
+                float origScale = saveScale;
+                saveScale *= mScaleFactor;
+                if (saveScale > maxScale) {
+                    saveScale = maxScale;
+                    mScaleFactor = maxScale / origScale;
+                } else if (saveScale < minScale) {
+                    saveScale = minScale;
+                    mScaleFactor = minScale / origScale;
+                }
+                right = getWidth() * saveScale - getWidth();
+                bottom = getHeight() * saveScale - getHeight();
+                if (0 <= getWidth() || 0 <= getHeight()) {
+                    matrix.postScale(mScaleFactor, mScaleFactor, detector.getFocusX(), detector.getFocusY());
+                    if (mScaleFactor < 1) {
+                        matrix.getValues(m);
+                        float x = m[Matrix.MTRANS_X];
+                        float y = m[Matrix.MTRANS_Y];
+                        if (mScaleFactor < 1) {
+                            if (0 < getWidth()) {
+                                if (y < -bottom)
+                                    matrix.postTranslate(0, -(y + bottom));
+                                else if (y > 0)
+                                    matrix.postTranslate(0, -y);
+                            } else {
+                                if (x < -right)
+                                    matrix.postTranslate(-(x + right), 0);
+                                else if (x > 0)
+                                    matrix.postTranslate(-x, 0);
+                            }
+                        }
+                    }
+                } else {
+                    matrix.postScale(mScaleFactor, mScaleFactor, detector.getFocusX(), detector.getFocusY());
+                    matrix.getValues(m);
+                    float x = m[Matrix.MTRANS_X];
+                    float y = m[Matrix.MTRANS_Y];
+                    if (mScaleFactor < 1) {
+                        if (x < -right)
+                            matrix.postTranslate(-(x + right), 0);
+                        else if (x > 0)
+                            matrix.postTranslate(-x, 0);
+                        if (y < -bottom)
+                            matrix.postTranslate(0, -(y + bottom));
+                        else if (y > 0)
+                            matrix.postTranslate(0, -y);
+                    }
+                }
+                return true;
+            }
+        }
+    }
+
 }
