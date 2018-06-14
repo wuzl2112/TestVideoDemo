@@ -64,7 +64,7 @@ public class IjkVideoView extends FrameLayout implements MediaController.MediaPl
     private String TAG = "IjkVideoView";
     // settable by the client
     private Uri mUri;
-    private Map<String, String> mHeaders;
+    private Map<String,String> mHeaders;
 
     // all possible internal states
     private static final int STATE_ERROR = -1;
@@ -175,7 +175,7 @@ public class IjkVideoView extends FrameLayout implements MediaController.MediaPl
         subtitleDisplay.setTextSize(24);
         subtitleDisplay.setGravity(Gravity.CENTER);
         FrameLayout.LayoutParams layoutParams_txt = new FrameLayout.LayoutParams(
-                LayoutParams.MATCH_PARENT,
+                FrameLayout.LayoutParams.WRAP_CONTENT,
                 FrameLayout.LayoutParams.WRAP_CONTENT,
                 Gravity.BOTTOM);
         addView(subtitleDisplay, layoutParams_txt);
